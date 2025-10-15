@@ -1,0 +1,34 @@
+name: Release 🚢
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-[a-z]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to release."
+        required: true
+
+jobs:
+  cometbft:
+    runs-on: [ubuntu-latest]
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: echo "GO_VERSION=$(cat .github/workflows/go-version.env | grep GO_VERSION | cut -d '=' -f2)" >> $GITHUB_ENV
+    - uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    - name: Release
+      uses: goreleaser/goreleaser-action@v6
+      with:
+        version: latest
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+      
