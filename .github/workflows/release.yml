@@ -18,6 +18,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v5
       with:
+        repository: "cometbft/cometbft"
         fetch-depth: 0
     - run: echo "GO_VERSION=$(cat .github/workflows/go-version.env | grep GO_VERSION | cut -d '=' -f2)" >> $GITHUB_ENV
     - uses: actions/setup-go@v6
