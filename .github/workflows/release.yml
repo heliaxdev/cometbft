@@ -17,11 +17,52 @@ jobs:
         repository: "cometbft/cometbft"
         ref: ${{ github.event.inputs.tag }}
         fetch-depth: 0
-    - uses: actions/checkout@v3
-      with:
-        sparse-checkout: |
-          .goreleaser.yml
-        sparse-checkout-cone-mode: false
+    - name: Patch .goreleaser.yml
+      run: |
+        rm .goreleaser.yml
+        cat <<'EOF' > .goreleaser.yml
+        project_name: cometbft
+
+        env:
+          # Require use of Go modules.
+          - GO111MODULE=on
+
+        builds:
+          - id: "cometbft"
+            main: ./cmd/cometbft/main.go
+            ldflags:
+              - -s -w -X github.com/cometbft/cometbft/version.TMCoreSemVer={{ .Version }}
+            env:
+              - CGO_ENABLED=0
+            goos:
+              - darwin
+              - linux
+              - windows
+            goarch:
+              - amd64
+              - arm
+              - arm64
+
+        checksum:
+          name_template: SHA256SUMS-{{.Version}}.txt
+          algorithm: sha256
+
+        release:
+          github:
+            owner: heliaxdev
+            name: cometbft
+          prerelease: auto
+          name_template: "v{{.Version}}"
+
+        archives:
+          - files:
+              - LICENSE
+              - README.md
+              - UPGRADING.md
+              - SECURITY.md
+              - CHANGELOG.md
+        EOF
+
     - run: echo "GO_VERSION=$(cat .github/workflows/go-version.env | grep GO_VERSION | cut -d '=' -f2)" >> $GITHUB_ENV
     - uses: actions/setup-go@v6
       with:
