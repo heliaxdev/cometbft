@@ -17,6 +17,11 @@ jobs:
         repository: "cometbft/cometbft"
         ref: ${{ github.event.inputs.tag }}
         fetch-depth: 0
+    - uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          .goreleaser.yml
+        sparse-checkout-cone-mode: false
     - run: echo "GO_VERSION=$(cat .github/workflows/go-version.env | grep GO_VERSION | cut -d '=' -f2)" >> $GITHUB_ENV
     - uses: actions/setup-go@v6
       with:
