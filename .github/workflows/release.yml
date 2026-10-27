@@ -17,6 +17,26 @@ jobs:
         repository: "cometbft/cometbft"
         ref: ${{ github.event.inputs.tag }}
         fetch-depth: 0
+    - name: Compute version from the tag being built
+      run: |
+        # Prefer the exact tag pointing at HEAD; fall back to the workflow input.
+        TAG="$(git tag --points-at HEAD | tail -n1)"
+        if [ -z "$TAG" ]; then
+          TAG="${{ github.event.inputs.tag }}"
+        fi
+        # Strip the leading 'v' so the version moniker reads e.g. "0.37.18".
+        VERSION="${TAG#v}"
+        echo "TM_VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "Building tag '$TAG' as version '$VERSION'"
+    - name: Patch version.go with the tag version
+      run: |
+        # Upstream declares TMCoreSemVer as a const, so the -X ldflag cannot
+        # override it. Rewrite the fallback value instead, matching what the
+        # binary will report when built from this tag.
+        sed -i \
+          "s|TMCoreSemVer = \"[0-9A-Za-z.\\-]*\"|TMCoreSemVer = \"${TM_VERSION}\"|" \
+          version/version.go
+        grep 'TMCoreSemVer =' version/version.go
     - name: Patch .goreleaser.yml
       run: |
         rm .goreleaser.yml
